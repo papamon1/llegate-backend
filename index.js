@@ -18,7 +18,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // simple route
 app.get("/", (req, res) => {
-    res.json({ message: "Hola llégate." });
+    return res.status(200).json({ message: 'Welcome to Express API template' });
 });
 
 // set port, listen for requests
