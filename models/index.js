@@ -33,6 +33,7 @@ sequelize.authenticate().then(() => {
 const db = {};
 
 db.Sequelize = Sequelize;
+db.sequelize = sequelize;
 db.advertisings = require("./advertisings.model")(sequelize, Sequelize);
 db.posts = require("./posts.model")(sequelize, Sequelize);
 module.exports = db;

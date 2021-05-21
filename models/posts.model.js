@@ -50,10 +50,21 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,             
         },
         created_at: { 
-            type: Sequelize.DATE,             
+            type: Sequelize.DATE,  
+            defaultValue: Sequelize.NOW,           
         },
         updated_at: { 
-            type: Sequelize.DATE,             
+            type: Sequelize.DATE,       
+            defaultValue: Sequelize.NOW,      
+        },
+        email: { 
+            type: Sequelize.STRING,             
+        },
+        phone: { 
+            type: Sequelize.STRING,             
+        },
+        aditional: { 
+            type: Sequelize.STRING,             
         },
     },
     {

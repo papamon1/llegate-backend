@@ -1,9 +1,11 @@
 const posts = require("../controllers/posts.controller");
+const bodyParser = require ('body-parser')
+var jsonParser = bodyParser.json()
 
 var router = require("express").Router();
 
 // Create a new Post
-router.post("/", posts.create);
+router.post("/", jsonParser, posts.create);
 
 // Retrieve all posts
 router.get("/", posts.findAll);
@@ -11,7 +13,7 @@ router.get("/", posts.findAll);
 // Retrieve all published posts
 router.get("/published", posts.findAllPublished);
 
-// Retrieve a single Tutorial with id
+// Retrieve a single Post with id
 router.get("/:id", posts.findOne);
 
 // Update a Post with id

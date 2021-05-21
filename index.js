@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
+const server = require('http').createServer(app)    
 
 // var corsOptions = {
 //     origin: "http://localhost:8081"
@@ -30,9 +31,8 @@ const postsRoutes = require('./routes/posts.routes')
 
 app.use('/api/v1/advertisings', advertisingsRoutes);
 app.use('/api/v1/posts', postsRoutes);
+app.use(bodyParser.json())
 
-// set port, listen for requests
-const PORT = process.env.PORT || 8080;
-    app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}.`);
+server.listen('8080' , function() {
+  console.log('App is running on port: ' + 8080);
 });
