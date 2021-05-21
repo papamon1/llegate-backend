@@ -4,6 +4,7 @@ const Op = db.Sequelize.Op;
 const sequelize = db.sequelize;
 const { whereBuilder } = require("../utils/queryHelper");
 const { upload } = require("../utils/cloudinary");
+const utils = require("../utils/utils");
 
 // Create and Save a new Post
 exports.create = function (req, res) {
@@ -159,7 +160,32 @@ exports.findOne = (req, res) => {
 };
 
 // Update a Post by the id in the request
-exports.update = (req, res) => {};
+exports.update = (req, res) => {
+  // Convert array of photos and services into a string that can be stored
+  // stringify didn't work
+
+  req.body.post.photos = req.body.post.photos
+    ? utils.formatStringToStore(req.body.post.photos)
+    : "{}";
+  req.body.post.services = req.body.post.services
+    ? utils.formatStringToStore(req.body.post.services)
+    : "{}";
+  Posts.update(req.body.post, {
+    returning: true,
+    where: { id: req.body.post.id },
+  })
+    .then(([foundPost, [posts]]) => {
+      console.log(posts);
+      res.status(201).send({
+        post: posts,
+      });
+    })
+    .catch((err) => {
+      res.status(500).send({
+        err: err,
+      });
+    });
+};
 
 // Delete a Post with the specified id in the request
 exports.delete = (req, res) => {};

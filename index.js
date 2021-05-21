@@ -28,10 +28,10 @@ const postsRoutes = require('./routes/posts.routes')
 
 
 
-
+app.use(bodyParser.json())
 app.use('/api/v1/advertisings', advertisingsRoutes);
 app.use('/api/v1/posts', postsRoutes);
-app.use(bodyParser.json())
+
 
 server.listen('8080' , function() {
   console.log('App is running on port: ' + 8080);

@@ -1,6 +1,6 @@
 const posts = require("../controllers/posts.controller");
-const bodyParser = require ('body-parser')
-var jsonParser = bodyParser.json()
+const bodyParser = require("body-parser");
+var jsonParser = bodyParser.json();
 
 var router = require("express").Router();
 
@@ -17,7 +17,7 @@ router.get("/published", posts.findAllPublished);
 router.get("/:id", posts.findOne);
 
 // Update a Post with id
-router.put("/:id", posts.update);
+router.patch("/", posts.update);
 
 // Delete a Post with id
 router.delete("/:id", posts.delete);
