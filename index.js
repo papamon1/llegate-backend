@@ -14,6 +14,7 @@ const server = require("http").createServer(app);
 const advertisingsRoutes = require("./routes/advertisings.routes");
 const postsRoutes = require("./routes/posts.routes");
 const propertiesRoutes = require("./routes/properties.routes");
+const jobsRoutes = require("./routes/jobs.routes");
 
 // parse requests of content-type - application/json
 // app.use(bodyParser.json());
@@ -29,6 +30,8 @@ const propertiesRoutes = require("./routes/properties.routes");
 app.use(bodyParser.json());
 app.use("/api/v1/advertisings", advertisingsRoutes);
 app.use("/api/v1/posts", postsRoutes);
+app.use("/api/v1/properties", propertiesRoutes);
+app.use("/api/v1/jobs", jobsRoutes);
 
 server.listen("8080", function () {
   console.log("App is running on port: " + 8080);

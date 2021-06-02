@@ -6,7 +6,8 @@ var router = require("express").Router();
 
 // Create a new Post
 router.post("/", jsonParser, postsCtlr.create);
+
 // Get properties
-router.get("/", jsonParser, postsCtlr.findProperties);
+router.get("/", jsonParser, postsCtlr.findJobs);
 
 module.exports = router;
