@@ -1,15 +1,17 @@
 const db = require("../models");
 const Op = db.Sequelize.Op;
 
-exports.whereBuilder = (params) =>{
-    const propertyNames = Object.keys(params);
-    const conditions = {}
-    console.log('aqui estamos')
+exports.whereBuilder = (params, post_type = null) => {
+  const propertyNames = Object.keys(params);
+  const conditions = {};
 
-    propertyNames.forEach(prop=>{
-        console.log(prop)
-        conditions[prop]={ [Op.iLike]: `%${params[prop]}%` }        
-    })
+  propertyNames.forEach((prop) => {
+    //Componemos las condiciones y nos saltamos los parámetros de tamaño y pagina
+    if (prop !== "page" && prop !== "size")
+      conditions[prop] = { [Op.iLike]: `%${params[prop]}%` };
+  });
 
-    return conditions
-}
+  if (post_type) conditions["post_type"] = { [Op.eq]: `${post_type}` };
+
+  return conditions;
+};

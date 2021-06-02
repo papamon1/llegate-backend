@@ -10,6 +10,12 @@ router.post("/", jsonParser, posts.create);
 // Retrieve all posts
 router.get("/", posts.findAll);
 
+// Retrieve latest posts
+router.get("/latest", posts.findLatest);
+
+// Retrieve top posts
+router.get("/top", posts.findTop);
+
 // Retrieve all published posts
 router.get("/published", posts.findAllPublished);
 
@@ -21,8 +27,5 @@ router.patch("/", posts.update);
 
 // Delete a Post with id
 router.delete("/:id", posts.delete);
-
-// Create a new Post
-router.delete("/", posts.deleteAll);
 
 module.exports = router;
