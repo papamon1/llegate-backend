@@ -92,21 +92,20 @@ exports.create = function (req, res) {
 
 // Retrieve all Posts from the database.
 exports.findAll = (req, res) => {
-  const title = req.query.title;
-  const final = {};
+  const { size=10, page=1 } = req.query;
   var condition = title ? { title: { [Op.iLike]: `%${title}%` } } : null;
   Posts.findAll({
     where: whereBuilder(req.query),
-    limit: req.query.size,
-    offset: Number(req.query.page) * Number(req.query.size),
+    limit: Number(size),
+    offset: Number(page) * Number(size),
     order: [["updated_at", "desc"]],
   })
     // Posts.findAll()
     .then((dataTotal) => {
       Posts.findAll({
         where: whereBuilder(req.query),
-        limit: req.query.size,
-        offset: req.query.page,
+        limit: Number(size),
+        offset: Number(page) * Number(size),
         order: [["updated_at", "desc"]],
       }).then(data);
       res.send(data);
