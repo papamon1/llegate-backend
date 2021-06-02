@@ -11,80 +11,70 @@ exports.create = function (req, res) {
   // const {job} = req.body;
 
   sequelize.query("SELECT nextval('posts_id_seq')").then((nextvalId) => {
-    console.log("escuchame");
     const newId = nextvalId[0][0].nextval;
 
     const { job } = req.body;
-    const { photos } = req.body.jobs;
+    const { property } = req.body;
+    let newPost = null;
+    let photos = null;
 
-    newPost = Posts.build({
-      id: newId,
-      post_type: job.post_type || null,
-      price: job.price || null,
-      category: job.category || null,
-      description: job.description || null,
-      location: job.location || null,
-      duration: job.duration || null,
-      email: job.email || null,
-      phone: job.phone || null,
-      additional: job.additional || null,
-    });
+    // Componemos el nuevo objeto
+    if (job) {
+      photos = job.photos;
+
+      newPost = Posts.build({
+        id: newId,
+        post_type: job.post_type || null,
+        price: job.price || null,
+        category: job.category || null,
+        description: job.description || null,
+        location: job.location || null,
+        duration: job.duration || null,
+        email: job.email || null,
+        phone: job.phone || null,
+        additional: job.additional || null,
+        photos: utils.formatStringToStore(
+          photos.map(
+            (pic, index) => `posts_photos/post_${newId}/${newId}_${index}.png`
+          )
+        ),
+      });
+    }else{
+      photos = property.photos;
+      const {services} = property;
+
+      newPost = Posts.build({
+        id: newId,
+        post_type: property.post_type || null,
+        price: property.price || null,
+        category: property.category || null,
+        description: property.description || null,
+        location: property.location || null,
+        duration: property.duration || null,
+        email: property.email || null,
+        phone: property.phone || null,
+        additional: property.additional || null,
+        photos: utils.formatStringToStore(
+          photos.map(
+            (pic, index) => `posts_photos/post_${newId}/${newId}_${index}.png`
+          )
+        ),
+        services: utils.formatStringToStore(services),
+      });
+    }
 
     newPost
       .save()
       .then((newReg, newRegError) => {
         if (!newRegError) {
-          console.log("resultado");
-          console.log(newReg);
-
           //Imagenes
 
-          let requests = photos.map((photo) => upload(photo));
-
-          Promise.all(requests)
-            .then((body) => {
-              //this gets called when all the promises have resolved/rejected.
-              let results = [];
-              body.forEach((res, index) => {
-                console.log(orders[index]);
-                const vromoPrice = Vromo.getVromoPrice(
-                  orders[index].seller.lat,
-                  orders[index].seller.lon,
-                  orders[index].customerData.lat,
-                  orders[index].customerData.lon
-                );
-                if (res)
-                  results.push({
-                    ...orders[index]._doc,
-                    stuartPrice: res.body.amount,
-                    vromoPrice,
-                  });
-                else results.push({ ...orders[index]._doc, vromoPrice });
-                // productsToReturn.push(JSON.parse(res).productInfo)
-              });
-
-              if (results.length == 0) {
-                return res.status(200).send({
-                  orders: orders,
-                  message: "Push creado con exito",
-                });
-              } else {
-                return res.status(200).send({
-                  orders: results,
-                  message: "Push creado con exito",
-                });
-              }
-            })
-            .catch((err) => console.log(err));
-
-          photos.forEach((photo) => {
-            upload(req.body.photos[0]).then((result, error) => {
-              console.log(result);
-              return res.status(200).send({
-                result: "OK",
-                code: 200,
-              });
-            });
+          photos.forEach((photo, index) => {
+            const tempFile = utils.encodeFile(
+              "data:image/png;base64," + photo,
+              newId,
+              index
+            );
           });
 
           return res.status(200).send({
@@ -92,45 +82,97 @@ exports.create = function (req, res) {
             code: 200,
           });
         }
-        console.log("here?");
       })
       .catch((error) => {
         console.log("shit");
         console.log(error);
       });
   });
-
-  // newPost.save()
-  // .then(()=>{
-  //   console.log('here?')
-  // })
-  // .catch((error)=>{
-  //   console.log('shit')
-  //   console.log(error)
-  // })
-
-  // upload(req.body.photos[0])
-  // .then((result, error)=>{
-  //   console.log(result)
-  //   return res.status(200).send({
-  //     result: "OK",
-  //     code: 200
-  //   });
-  // })
 };
 
 // Retrieve all Posts from the database.
 exports.findAll = (req, res) => {
   const title = req.query.title;
+  const final = {};
   var condition = title ? { title: { [Op.iLike]: `%${title}%` } } : null;
-  console.log(whereBuilder(req.query));
-  // Post.findAll({ where: condition })
   Posts.findAll({
     where: whereBuilder(req.query),
-    limit: 10,
+    limit: req.query.size,
+    offset: Number(req.query.page) * Number(req.query.size),
+    order: [["updated_at", "desc"]],
   })
     // Posts.findAll()
-    .then((data) => {
+    .then((dataTotal) => {
+      Posts.findAll({
+        where: whereBuilder(req.query),
+        limit: req.query.size,
+        offset: req.query.page,
+        order: [["updated_at", "desc"]],
+      }).then(data);
+      res.send(data);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: err.message || "Some error occurred while retrieving Posts.",
+      });
+    });
+};
+
+// Retrieve top Posts from the database.
+exports.findTop = (req, res) => {
+  //Top properties
+  Posts.findAll({
+    where: whereBuilder(req.query, "property"),
+    limit: Number(req.query.size),
+    offset: Number(req.query.page) * Number(req.query.size),
+    order: [["updated_at", "desc"]],
+  })
+    // Top jobs
+    .then((dataProperties) => {
+      Posts.findAll({
+        where: whereBuilder(req.query, "job"),
+        limit: Number(req.query.size),
+        offset:
+          Number(req.query.page) === 1
+            ? 0
+            : Number(req.query.page) * Number(req.query.size),
+        order: [["updated_at", "desc"]],
+      }).then((dataJobs) => {
+        res.status(201).send({
+          top_posts: {
+            jobs: dataJobs,
+            properties: dataProperties,
+          },
+          result: "OK",
+          code: 200,
+        });
+      });
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: err.message || "Some error occurred while retrieving Posts.",
+      });
+    });
+};
+
+// Retrieve latest Posts from the database.
+exports.findLatest = (req, res) => {
+  const title = req.query.title;
+  const final = {};
+  Posts.findAll({
+    where: whereBuilder(req.query),
+    limit: req.query.size,
+    offset: Number(req.query.page) * Number(req.query.size),
+    order: [["updated_at", "desc"]],
+  })
+    // Posts.findAll()
+    .then((dataTotal) => {
+      Posts.findAll({
+        where: whereBuilder(req.query),
+        limit: req.query.size,
+        offset: req.query.page,
+        order: [["updated_at", "desc"]],
+      });
       res.send(data);
     })
     .catch((err) => {
@@ -147,7 +189,6 @@ exports.findOne = (req, res) => {
     { returning: true, where: { id: req.params.id } }
   )
     .then(([foundPost, [posts]]) => {
-      console.log(posts);
       res.status(200).send({
         post: posts,
       });
@@ -175,7 +216,6 @@ exports.update = (req, res) => {
     where: { id: req.body.post.id },
   })
     .then(([foundPost, [posts]]) => {
-      console.log(posts);
       res.status(201).send({
         post: posts,
       });
@@ -188,10 +228,67 @@ exports.update = (req, res) => {
 };
 
 // Delete a Post with the specified id in the request
-exports.delete = (req, res) => {};
+exports.delete = (req, res) => {
+  Posts.destroy({ where: { id: req.params.id } })
+    .then((results) => {
+      if (results === 0) {
+        res.status(404).send({
+          message: "Not found",
+          code: 404,
+        });
+      }
+      res.status(200).send({
+        result: "OK",
+        code: 200,
+      });
+    })
+    .catch((err) => {
+      res.status(500).send({
+        err: err,
+      });
+    });
+};
 
 // Delete all Posts from the database.
 exports.deleteAll = (req, res) => {};
 
 // Find all published Posts
 exports.findAllPublished = (req, res) => {};
+
+// Find all published Posts
+exports.findProperties = (req, res) => {
+  console.log(req.query.page);
+  //Top properties
+  Posts.findAll({
+    where: whereBuilder(req.query, "property"),
+    limit: Number(req.query.size),
+    offset: Number(req.query.page) * Number(req.query.size),
+    order: [["updated_at", "desc"]],
+  })
+    // Top jobs
+    .then((dataProperties) => {
+      Posts.findAll({
+        where: whereBuilder(req.query, "job"),
+        limit: Number(req.query.size),
+        offset:
+          Number(req.query.page) === 1
+            ? 0
+            : Number(req.query.page) * Number(req.query.size),
+        order: [["updated_at", "desc"]],
+      }).then((dataJobs) => {
+        res.status(201).send({
+          top_posts: {
+            jobs: dataJobs,
+            properties: dataProperties,
+          },
+          result: "OK",
+          code: 200,
+        });
+      });
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: err.message || "Some error occurred while retrieving Posts.",
+      });
+    });
+};
