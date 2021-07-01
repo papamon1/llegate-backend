@@ -37,3 +37,34 @@ exports.encodeFile = (dataurl, postNumber, index) => {
     Buffer.from(u8arr)
   );
 };
+
+exports.sanitizeContactField = (contact) => {
+  const newContact = {};
+  const itemArray = contact.split('"');
+  if (itemArray[1]) newContact[itemArray[1]] = itemArray[3];
+  if (itemArray[5]) newContact[itemArray[5]] = itemArray[7];
+  if (itemArray[9]) newContact[itemArray[9]] = itemArray[11];
+  return Object.entries(newContact).length === 0 ? null : newContact;
+};
+
+exports.dirtyContactField = (contact) => {
+  let contactString = "";
+  Object.entries(contact).forEach((item, index) => {
+    if (index !== 0) contactString = contactString + ", ";
+    contactString = contactString + `"${item[0]}"=>"${item[1]}"`;
+  });
+  return contactString;
+};
+
+// Login google
+// name = it.displayName,
+//                         socialNetworkType = SocialNetworkEnum.GOOGLE,
+//                         oauthToken = it.serverAuthCode,
+//                         idToken = it.idToken
+
+// Facebook Login
+
+// val user = UserBO(
+//                         socialNetworkType = SocialNetworkEnum.FACEBOOK,
+//                         oauthToken = response.request.accessToken.token
+//                     )

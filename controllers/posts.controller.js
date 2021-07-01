@@ -21,6 +21,7 @@ exports.create = function (req, res) {
     // Componemos el nuevo objeto
     if (job) {
       photos = job.photos;
+      const newContact = utils.dirtyContactField(job.contact);
 
       newPost = Posts.build({
         id: newId,
@@ -29,6 +30,7 @@ exports.create = function (req, res) {
         category: job.category || null,
         description: job.description || null,
         location: job.location || null,
+        contact: job.contact ? utils.dirtyContactField(job.contact) : null,
         duration: job.duration || null,
         email: job.email || null,
         phone: job.phone || null,
@@ -50,6 +52,9 @@ exports.create = function (req, res) {
         category: property.category || null,
         description: property.description || null,
         location: property.location || null,
+        contact: property.contact
+          ? utils.dirtyContactField(property.contact)
+          : null,
         duration: property.duration || null,
         email: property.email || null,
         phone: property.phone || null,
@@ -77,10 +82,17 @@ exports.create = function (req, res) {
             );
           });
 
-          return res.status(200).send({
-            result: "OK",
-            code: 200,
-          });
+          return job
+            ? res.status(200).send({
+                job: newReg,
+                result: "OK",
+                code: 200,
+              })
+            : res.status(200).send({
+                property: newReg,
+                result: "OK",
+                code: 200,
+              });
         }
       })
       .catch((error) => {
@@ -92,23 +104,45 @@ exports.create = function (req, res) {
 
 // Retrieve all Posts from the database.
 exports.findAll = (req, res) => {
-  const { size=10, page=1 } = req.query;
-  var condition = title ? { title: { [Op.iLike]: `%${title}%` } } : null;
+  const { size = 10, page = 1 } = req.query;
+  // var condition = title ? { title: { [Op.iLike]: `%${title}%` } } : null;
   Posts.findAll({
-    where: whereBuilder(req.query),
+    where: whereBuilder(req.query, "property"),
     limit: Number(size),
-    offset: Number(page) * Number(size),
+    offset: page > 1 ? Number(page - 1) * Number(size) : 0,
     order: [["updated_at", "desc"]],
   })
     // Posts.findAll()
-    .then((dataTotal) => {
+    .then((dataProperties) => {
+      const newDataProperties = [];
+      dataProperties.forEach((item) => {
+        if (item.contact) {
+          item.contact = utils.sanitizeContactField(item.contact);
+        }
+        newDataProperties.push(item);
+      });
       Posts.findAll({
-        where: whereBuilder(req.query),
+        where: whereBuilder(req.query, "job"),
         limit: Number(size),
-        offset: Number(page) * Number(size),
+        offset: page > 1 ? Number(page - 1) * Number(size) : 0,
         order: [["updated_at", "desc"]],
-      }).then(data);
-      res.send(data);
+      }).then((dataJobs) => {
+        const newDataJobs = [];
+        dataJobs.forEach((item) => {
+          if (item.contact) {
+            item.contact = utils.sanitizeContactField(item.contact);
+          }
+          newDataJobs.push(item);
+        });
+        res.status(201).send({
+          top_posts: {
+            jobs: newDataJobs,
+            properties: newDataProperties,
+          },
+          result: "OK",
+          code: 200,
+        });
+      });
     })
     .catch((err) => {
       res.status(500).send({
@@ -119,26 +153,40 @@ exports.findAll = (req, res) => {
 
 // Retrieve top Posts from the database.
 exports.findTop = (req, res) => {
-  const { size=10, page=1 } = req.query;
+  const { size = 10, page = 1 } = req.query;
   //Top properties
   Posts.findAll({
     where: whereBuilder(req.query, "property"),
     limit: Number(size),
-    offset: Number(page) * Number(size),
+    offset: page > 1 ? Number(page - 1) * Number(size) : 0,
     order: [["visits", "desc"]],
   })
     // Top jobs
     .then((dataProperties) => {
+      const newDataProperties = [];
+      dataProperties.forEach((item) => {
+        if (item.contact) {
+          item.contact = utils.sanitizeContactField(item.contact);
+        }
+        newDataProperties.push(item);
+      });
       Posts.findAll({
-        where: whereBuilder( "job"),
+        where: whereBuilder(req.query, "job"),
         limit: Number(size),
-        offset: Number(page) * Number(size),
+        offset: page > 1 ? Number(page - 1) * Number(size) : 0,
         order: [["visits", "desc"]],
       }).then((dataJobs) => {
+        const newDataJobs = [];
+        dataJobs.forEach((item) => {
+          if (item.contact) {
+            item.contact = utils.sanitizeContactField(item.contact);
+          }
+          newDataJobs.push(item);
+        });
         res.status(201).send({
           top_posts: {
-            jobs: dataJobs,
-            properties: dataProperties,
+            jobs: newDataJobs,
+            properties: newDataProperties,
           },
           result: "OK",
           code: 200,
@@ -154,22 +202,27 @@ exports.findTop = (req, res) => {
 
 // Retrieve latest Posts from the database.
 exports.findLatest = (req, res) => {
-  const { size=10, page=1 } = req.query;
+  const { size = 10, page = 1 } = req.query;
   Posts.findAll({
     where: whereBuilder(req.query),
     limit: size,
-    offset: Number(page) * Number(size),
-    order: [["visits", "desc"]],
+    offset: page > 1 ? Number(page - 1) * Number(size) : 0,
+    order: [["updated_at", "desc"]],
   })
-    // Posts.findAll()
-    .then((dataTotal) => {
-      Posts.findAll({
-        where: whereBuilder(req.query),
-        limit: size,
-        offset: page,
-        order: [["updated_at", "desc"]],
+    .then((posts) => {
+      const newPosts = [];
+      posts.forEach((item) => {
+        if (item.contact) {
+          item.contact = utils.sanitizeContactField(item.contact);
+        }
+
+        newPosts.push(item);
       });
-      res.send(data);
+      res.status(201).send({
+        latest: newPosts,
+        result: "OK",
+        code: 200,
+      });
     })
     .catch((err) => {
       res.status(500).send({
@@ -185,6 +238,8 @@ exports.findOne = (req, res) => {
     { returning: true, where: { id: req.params.id } }
   )
     .then(([foundPost, [posts]]) => {
+      if (posts.contact)
+        posts.contact = utils.sanitizeContactField(posts.contact);
       res.status(200).send({
         post: posts,
       });
@@ -254,11 +309,11 @@ exports.findAllPublished = (req, res) => {};
 // Find all published properties
 exports.findProperties = (req, res) => {
   //Top properties
-  const { size=10, page=1 } = req.query;
+  const { size = 10, page = 1 } = req.query;
   Posts.findAll({
     where: whereBuilder(req.query, "property"),
     limit: Number(size),
-    offset: Number(page) * Number(size),
+    offset: page > 1 ? Number(page - 1) * Number(size) : 0,
     order: [["visits", "desc"]],
   })
     // Latest properties
@@ -266,7 +321,7 @@ exports.findProperties = (req, res) => {
       Posts.findAll({
         where: whereBuilder(req.query, "property"),
         limit: Number(size),
-        offset: Number(page) * Number(size),
+        offset: page > 1 ? Number(page - 1) * Number(size) : 0,
         order: [["updated_at", "desc"]],
       }).then((latest) => {
         res.status(201).send({
@@ -288,12 +343,12 @@ exports.findProperties = (req, res) => {
 
 // Find all published jobs
 exports.findJobs = (req, res) => {
-  const { size=10, page=1 } = req.query;
+  const { size = 10, page = 1 } = req.query;
   //Top properties
   Posts.findAll({
     where: whereBuilder(req.query, "job"),
     limit: Number(size) || 0,
-    offset: Number(page) * Number(size),
+    offset: page > 1 ? Number(page - 1) * Number(size) : 0,
     order: [["visits", "desc"]],
   })
     // Latest properties
@@ -301,7 +356,7 @@ exports.findJobs = (req, res) => {
       Posts.findAll({
         where: whereBuilder(req.query, "job"),
         limit: Number(size),
-        offset:Number(page) * Number(size),
+        offset: page > 1 ? Number(page - 1) * Number(size) : 0,
         order: [["updated_at", "desc"]],
       }).then((latest) => {
         res.status(201).send({
