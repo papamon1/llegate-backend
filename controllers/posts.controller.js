@@ -37,7 +37,7 @@ exports.create = function (req, res) {
         additional: job.additional || null,
         photos: utils.formatStringToStore(
           photos.map(
-            (pic, index) => `posts_photos/post_${newId}/${newId}_${index}.png`
+            (pic, index) => `http://llegate.netposts_photos/post_${newId}/${newId}_${index}.png`
           )
         ),
       });
@@ -61,7 +61,7 @@ exports.create = function (req, res) {
         additional: property.additional || null,
         photos: utils.formatStringToStore(
           photos.map(
-            (pic, index) => `posts_photos/post_${newId}/${newId}_${index}.png`
+            (pic, index) => `https://llegate.net/posts_photos/post_${newId}/${newId}_${index}.png`
           )
         ),
         services: utils.formatStringToStore(services),
