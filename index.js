@@ -33,6 +33,6 @@ app.use("/api/v02/posts", postsRoutes);
 app.use("/api/v02/properties", propertiesRoutes);
 app.use("/api/v02/jobs", jobsRoutes);
 
-server.listen(8282, function () {
+server.listen(process.env.PORT || 8282, function () {
   console.log("App is running on port: " + 8282);
 });
