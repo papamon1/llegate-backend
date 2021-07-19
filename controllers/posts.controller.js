@@ -37,7 +37,7 @@ exports.create = function (req, res) {
         additional: job.additional || null,
         photos: utils.formatStringToStore(
           photos.map(
-            (pic, index) => `http://llegate.netposts_photos/post_${newId}/${newId}_${index}.png`
+            (pic, index) => `posts_photos/post_${newId}/${newId}_${index}.png`
           )
         ),
       });
@@ -61,7 +61,7 @@ exports.create = function (req, res) {
         additional: property.additional || null,
         photos: utils.formatStringToStore(
           photos.map(
-            (pic, index) => `https://llegate.net/posts_photos/post_${newId}/${newId}_${index}.png`
+            (pic, index) => `posts_photos/post_${newId}/${newId}_${index}.png`
           )
         ),
         services: utils.formatStringToStore(services),
@@ -119,6 +119,11 @@ exports.findAll = (req, res) => {
         if (item.contact) {
           item.contact = utils.sanitizeContactField(item.contact);
         }
+        if (item.photos.length > 0) {
+          let newPhotos = [];
+          newPhotos = item.photos.map((photo) => `http://llegate.net/${photo}`);
+          item.photos = newPhotos;
+        }
         newDataProperties.push(item);
       });
       Posts.findAll({
@@ -131,6 +136,11 @@ exports.findAll = (req, res) => {
         dataJobs.forEach((item) => {
           if (item.contact) {
             item.contact = utils.sanitizeContactField(item.contact);
+          }
+          if (item.photos.length > 0) {
+            let newPhotos = [];
+            newPhotos = item.photos.map((photo) => `http://llegate.net/${photo}`);
+            item.photos = newPhotos;
           }
           newDataJobs.push(item);
         });
@@ -168,6 +178,11 @@ exports.findTop = (req, res) => {
         if (item.contact) {
           item.contact = utils.sanitizeContactField(item.contact);
         }
+        if (item.photos.length > 0) {
+          let newPhotos = [];
+          newPhotos = item.photos.map((photo) => `http://llegate.net/${photo}`);
+          item.photos = newPhotos;
+        }
         newDataProperties.push(item);
       });
       Posts.findAll({
@@ -180,6 +195,11 @@ exports.findTop = (req, res) => {
         dataJobs.forEach((item) => {
           if (item.contact) {
             item.contact = utils.sanitizeContactField(item.contact);
+          }
+          if (item.photos.length > 0) {
+            let newPhotos = [];
+            newPhotos = item.photos.map((photo) => `http://llegate.net/${photo}`);
+            item.photos = newPhotos;
           }
           newDataJobs.push(item);
         });
@@ -215,7 +235,11 @@ exports.findLatest = (req, res) => {
         if (item.contact) {
           item.contact = utils.sanitizeContactField(item.contact);
         }
-
+        if (item.photos.length > 0) {
+          let newPhotos = [];
+          newPhotos = item.photos.map((photo) => `http://llegate.net/${photo}`);
+          item.photos = newPhotos;
+        }
         newPosts.push(item);
       });
       res.status(201).send({
